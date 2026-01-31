@@ -3,52 +3,47 @@ class SoundService {
 
   private init() {
     if (!this.ctx) {
-      // Create the audio context only after a user interaction
       this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
   }
 
   play(type: 'click' | 'levelUp' | 'victory') {
-    // Initialize on first play
     if (!this.ctx) this.init();
     if (!this.ctx) return;
 
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-
+    
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
     const now = this.ctx.currentTime;
-
-    // Generate sounds mathematically
+    osc.start(now);
+    
+    // Generowanie dźwięków matematycznie (beep boop)
     if (type === 'click') {
       osc.frequency.setValueAtTime(600, now);
       osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.1);
       gain.gain.setValueAtTime(0.1, now);
-      osc.start(now);
       osc.stop(now + 0.1);
-    }
+    } 
     else if (type === 'levelUp') {
       osc.type = 'square';
       osc.frequency.setValueAtTime(440, now);
-      osc.frequency.setValueAtTime(554, now + 0.1);
-      osc.frequency.setValueAtTime(659, now + 0.2);
-      gain.gain.setValueAtTime(0.1, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-      osc.start(now);
-      osc.stop(now + 0.6);
-    }
+      osc.frequency.setValueAtTime(880, now + 0.1);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.linearRampToValueAtTime(0, now + 0.3);
+      osc.stop(now + 0.3);
+    } 
     else if (type === 'victory') {
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(523, now);     // C
-      osc.frequency.setValueAtTime(659, now + 0.15); // E
-      osc.frequency.setValueAtTime(784, now + 0.3);  // G
-      osc.frequency.setValueAtTime(1046, now + 0.45); // High C
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.linearRampToValueAtTime(0, now + 1.5);
-      osc.start(now);
-      osc.stop(now + 1.5);
+      osc.frequency.setValueAtTime(523, now);
+      osc.frequency.linearRampToValueAtTime(1046, now + 0.5);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.linearRampToValueAtTime(0, now + 1.0);
+      osc.stop(now + 1.0);
+    } else {
+      osc.stop(now);
     }
   }
 }

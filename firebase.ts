@@ -12,6 +12,7 @@ const firebaseConfig = {
     authDomain: "munchkin-counter-5a1e3.firebaseapp.com",
     projectId: "munchkin-counter-5a1e3",
     storageBucket: "munchkin-counter-5a1e3.firebasestorage.app",
+    databaseURL: "https://munchkin-counter-5a1e3-default-rtdb.europe-west1.firebasedatabase.app",
     messagingSenderId: "186260588347",
     appId: "1:186260588347:web:9f16817eb3a69c28f4991e",
     measurementId: "G-NNP50QB0JV"
