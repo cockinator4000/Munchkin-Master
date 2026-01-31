@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Player, GameLog, BattleState, Language } from './types';
 import PlayerCard from './components/PlayerCard';
 import { soundService } from './src/services/soundService';
-import { Plus, RotateCcw, X, ScrollText, Sword, Ghost, Zap, Share2, Skull } from 'lucide-react';
+import { Plus, RotateCcw, X, ScrollText, Sword, Ghost, Zap, Share2, Skull, Shield } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { translations } from './translations';
 // FIREBASE
@@ -71,7 +71,7 @@ const App: React.FC = () => {
       setBattle(sanitizeBattle(data));
     });
 
-    // 3. Sync Logs (NOWOŚĆ - WSZYSCY WIDZĄ TO SAMO)
+    // 3. Sync Logs
     const logsRef = ref(db, `rooms/${roomId}/logs`);
     const unsubLogs = onValue(logsRef, (snapshot) => {
       const data = snapshot.val();
@@ -89,7 +89,6 @@ const App: React.FC = () => {
     if (roomId) set(ref(db, `rooms/${roomId}/battle`), newBattle);
   };
 
-  // Funkcja dodająca logi bezpośrednio do chmury
   const pushLogToCloud = (message: string, type: GameLog['type'] = 'info') => {
     if (!roomId) return;
     const newLog: GameLog = {
@@ -98,7 +97,6 @@ const App: React.FC = () => {
       message,
       type
     };
-    // Dodajemy nowy log na początek i ucinamy do 50 ostatnich
     const newLogsList = [newLog, ...logs].slice(0, 50);
     set(ref(db, `rooms/${roomId}/logs`), newLogsList);
   };
@@ -130,7 +128,6 @@ const App: React.FC = () => {
       if (p.id !== id) return p;
       const updated = { ...p, ...updates };
 
-      // LEVEL UP
       if (updated.level > p.level) {
         soundService.play('levelUp');
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
@@ -142,9 +139,8 @@ const App: React.FC = () => {
           pushLogToCloud(`${p.name} ${t.victory}`, 'warning');
         }
       }
-      // LEVEL DOWN (NOWOŚĆ)
       else if (updated.level < p.level) {
-        soundService.play('levelDown'); // Smutny dźwięk
+        soundService.play('levelDown');
         pushLogToCloud(`${p.name} ${t.lostLevel}`, 'danger');
       }
 
@@ -166,7 +162,6 @@ const App: React.FC = () => {
     if (confirm(t.resetWarning)) {
       soundService.play('click');
       updateCloud(players.map(p => ({ ...p, level: 1, gear: 0 })));
-      // Czyścimy też logi przy resecie
       if (roomId) set(ref(db, `rooms/${roomId}/logs`), []);
       pushLogToCloud(t.resetLog, 'warning');
     }
@@ -197,7 +192,25 @@ const App: React.FC = () => {
     updateBattle({ selectedPlayerIds: newIds });
   };
 
-  // --- CALCULATIONS ---
+  // --- NEW: HANDLE PLAYER BONUS UI ---
+  const handlePlayerBonus = (amount: number) => {
+    const current = sanitizeBattle(battle);
+    // Dodajemy bonus pierwszemu zaznaczonemu graczowi (jako liderowi)
+    // Dzięki temu mamy gdzie zapisać "wspólne" bonusy
+    if (current.selectedPlayerIds.length === 0) return;
+
+    const leaderId = current.selectedPlayerIds[0];
+    const currentBonus = current.playerBonuses?.[leaderId] || 0;
+
+    updateBattle({
+      playerBonuses: {
+        ...current.playerBonuses,
+        [leaderId]: currentBonus + amount
+      }
+    });
+  };
+
+  // --- CALCULATIONS & RULES ---
   const getCombatStrength = (p: Player) => {
     const bonuses = battle?.playerBonuses || {};
     return (p.level || 1) + (p.gear || 0) + (bonuses[p.id] || 0);
@@ -210,12 +223,22 @@ const App: React.FC = () => {
     return sum + (p ? getCombatStrength(p) : 0);
   }, 0);
 
+  // Obliczamy sumę samych bonusów (One-shots) dla graczy, żeby wyświetlić w UI
+  const totalPlayerBonuses = safeSelectedIds.reduce((sum, id) => sum + (battle.playerBonuses?.[id] || 0), 0);
+
   const totalMonsterStrength = (battle?.monsterLevel || 1) + (battle?.monsterBonus || 0);
-  const playersWinning = totalPlayerStrength > totalMonsterStrength;
+
+  // --- WARRIOR RULE LOGIC ---
+  const hasWarrior = safeSelectedIds.some(id => {
+    const p = players.find(px => px.id === id);
+    return p && (p.class === 'Warrior' || p.class === 'Wojownik');
+  });
+
+  const playersWinning = totalPlayerStrength > totalMonsterStrength ||
+  (totalPlayerStrength === totalMonsterStrength && hasWarrior);
 
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    // Ten log akurat zostawiamy tylko lokalnie, bo dotyczy tylko Twojego schowka
     alert("Link copied!");
   };
 
@@ -274,6 +297,7 @@ const App: React.FC = () => {
       </div>
 
       <div className="space-y-4 mb-6">
+      {/* SEKCJA POTWORA */}
       <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-red-500/20">
       <span className="text-red-300 font-bold uppercase text-xs tracking-wider">{t.monster}</span>
       <div className="flex items-center gap-4">
@@ -290,12 +314,31 @@ const App: React.FC = () => {
       <button onClick={() => updateBattle({ monsterBonus: (battle.monsterBonus || 0) + 5 })} className="w-8 h-8 rounded bg-slate-700 text-white text-xs">+5</button>
       </div>
       </div>
+
+      {/* NOWA SEKCJA: BONUSY GRACZY (ONE-SHOTS) */}
+      <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-blue-500/20">
+      <span className="text-blue-300 font-bold uppercase text-xs tracking-wider">Party Bonus</span>
+      <div className="flex items-center gap-4">
+      <button onClick={() => handlePlayerBonus(-1)} className="w-8 h-8 rounded bg-slate-700 text-white">-</button>
+      <span className="text-xl font-bold text-white w-12 text-center">
+      {totalPlayerBonuses > 0 ? '+' : ''}{totalPlayerBonuses}
+      </span>
+      <button onClick={() => handlePlayerBonus(1)} className="w-8 h-8 rounded bg-slate-700 text-white">+</button>
+      </div>
+      </div>
       </div>
 
+      {/* PODSUMOWANIE */}
       <div className="grid grid-cols-2 gap-4 mb-4">
       <div className={`p-3 rounded-lg border text-center transition-colors ${playersWinning ? 'bg-green-500/20 border-green-500/50' : 'bg-slate-800 border-slate-700'}`}>
       <div className="text-xs uppercase text-slate-400 mb-1">{t.party}</div>
       <div className="text-3xl font-black text-white">{totalPlayerStrength}</div>
+      {/* Ikonka wygranej Wojownika przy remisie */}
+      {totalPlayerStrength === totalMonsterStrength && hasWarrior && (
+        <div className="text-[10px] text-green-400 mt-1 uppercase tracking-widest flex justify-center items-center gap-1">
+        <Sword size={10} /> Warrior Win
+        </div>
+      )}
       </div>
       <div className={`p-3 rounded-lg border text-center transition-colors ${!playersWinning ? 'bg-red-500/20 border-red-500/50' : 'bg-slate-800 border-slate-700'}`}>
       <div className="text-xs uppercase text-slate-400 mb-1">{t.threatLevel}</div>
