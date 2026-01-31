@@ -7,7 +7,8 @@ class SoundService {
     }
   }
 
-  play(type: 'click' | 'levelUp' | 'victory') {
+  // Dodalem 'levelDown' do listy dozwolonych dzwiekow
+  play(type: 'click' | 'levelUp' | 'victory' | 'levelDown') {
     if (!this.ctx) this.init();
     if (!this.ctx) return;
 
@@ -20,7 +21,6 @@ class SoundService {
     const now = this.ctx.currentTime;
     osc.start(now);
     
-    // Generowanie dźwięków matematycznie (beep boop)
     if (type === 'click') {
       osc.frequency.setValueAtTime(600, now);
       osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.1);
@@ -42,7 +42,17 @@ class SoundService {
       gain.gain.setValueAtTime(0.1, now);
       gain.gain.linearRampToValueAtTime(0, now + 1.0);
       osc.stop(now + 1.0);
-    } else {
+    } 
+    // NOWY DZWIEK: SMUTNA TRABKA
+    else if (type === 'levelDown') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, now); // Start nisko
+      osc.frequency.linearRampToValueAtTime(100, now + 0.4); // Zjazd w dol
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.linearRampToValueAtTime(0, now + 0.4);
+      osc.stop(now + 0.4);
+    }
+    else {
       osc.stop(now);
     }
   }
