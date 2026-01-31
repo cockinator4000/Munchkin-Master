@@ -10,7 +10,7 @@ import { db } from './firebase';
 import { ref, onValue, set } from 'firebase/database';
 
 const App: React.FC = () => {
-  const [lang, setLang] = useState<Language>('en');
+  const [lang, setLang] = useState<Language>('pl');
   const [players, setPlayers] = useState<Player[]>([]);
   const [logs, setLogs] = useState<GameLog[]>([]);
   const [isSuperMunchkin, setIsSuperMunchkin] = useState(false);
