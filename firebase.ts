@@ -1,24 +1,16 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { getDatabase } from "firebase/database";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Teraz pobieramy dane ze zmiennych srodowiskowych
 const firebaseConfig = {
-    apiKey: "AIzaSyBao9XX8P5jASB4JMUKYLNUb3_AXfz24_4",
-    authDomain: "munchkin-counter-5a1e3.firebaseapp.com",
-    projectId: "munchkin-counter-5a1e3",
-    storageBucket: "munchkin-counter-5a1e3.firebasestorage.app",
-    databaseURL: "https://munchkin-counter-5a1e3-default-rtdb.europe-west1.firebasedatabase.app",
-    messagingSenderId: "186260588347",
-    appId: "1:186260588347:web:9f16817eb3a69c28f4991e",
-    measurementId: "G-NNP50QB0JV"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 export const db = getDatabase(app);
