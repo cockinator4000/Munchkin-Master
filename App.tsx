@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Player, GameLog, BattleState, Language } from './types';
 import PlayerCard from './components/PlayerCard';
-import { soundService } from './services/soundService';
+import { soundService } from './src/services/soundService';
 import { Plus, RotateCcw, X, ScrollText, Sword, Ghost, Zap, Share2, Skull } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { translations } from './translations';
 // FIREBASE
-import { db } from '../firebase'; // Note: points to root folder now
+import { db } from './firebase'; // Note: points to root folder now
 import { ref, onValue, set } from 'firebase/database';
 
 const App: React.FC = () => {
