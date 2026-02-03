@@ -174,26 +174,47 @@ const App: React.FC = () => {
   const handleUpdatePlayer = (id: string, updates: Partial<Player>) => {
     const list = players.map(p => {
       if (p.id !== id) return p;
+
       const updated = { ...p, ...updates };
 
+      // If GM changed stats - log '[GM]'
+      const actorPrefix = isGM ? '[GM] ' : '';
+
+      // --- 1. Logging inventory ---
+    if (updates.gear !== undefined && updates.gear !== p.gear) {
+      const diff = updates.gear - p.gear;
+      const sign = diff > 0 ? '+' : '';
+      // Wynik: "[GM] Conan: Gear +2 (Total: 5)"
+      // Używamy t.gear jeśli dostępne, lub po prostu "Gear"
+    const gearLabel = t.gear || "Gear";
+    pushLogToCloud(`${actorPrefix}${p.name}: ${gearLabel} ${sign}${diff} (= ${updated.gear})`, 'info');
+    }
+
+    // --- 2. Level logging ---
+    if (updated.level !== undefined && updated.level !== p.level) {
       if (updated.level > p.level) {
         soundService.play('levelUp');
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
-        pushLogToCloud(`${p.name} ${t.leveledUp} ${updated.level}!`, 'success');
+
+        // Dodajemy prefix GM do wiadomości o awansie
+        pushLogToCloud(`${actorPrefix}${p.name} ${t.leveledUp} ${updated.level}!`, 'success');
 
         if (updated.level === maxLevel) {
           soundService.play('victory');
           confetti({ particleCount: 200, spread: 100 });
-          pushLogToCloud(`${p.name} ${t.victory}`, 'warning');
+          pushLogToCloud(`${actorPrefix}${p.name} ${t.victory}`, 'warning');
         }
       }
       else if (updated.level < p.level) {
         soundService.play('levelDown');
-        pushLogToCloud(`${p.name} ${t.lostLevel}`, 'danger');
+        // Dodajemy prefix GM do wiadomości o spadku
+        pushLogToCloud(`${actorPrefix}${p.name} ${t.lostLevel}`, 'danger');
       }
+    }
 
-      return updated;
+    return updated;
     });
+
     updateCloud(list);
   };
 
