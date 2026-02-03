@@ -189,7 +189,7 @@ const App: React.FC = () => {
     }
 
 
-    --- 2. Level logging ---
+    // --- 2. Level logging ---
     if (updated.level !== undefined && updated.level !== p.level) {
       if (updated.level > p.level) {
         soundService.play('levelUp');
