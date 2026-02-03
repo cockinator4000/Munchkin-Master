@@ -7,7 +7,6 @@ class SoundService {
     }
   }
 
-  // Dodalem 'levelDown' do listy dozwolonych dzwiekow
   play(type: 'click' | 'levelUp' | 'victory' | 'levelDown') {
     if (!this.ctx) this.init();
     if (!this.ctx) return;

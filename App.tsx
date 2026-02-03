@@ -26,14 +26,13 @@ const App: React.FC = () => {
     }
   });
 
-  // Reset licznika tapnięć po 1 sekundzie bezczynności
   useEffect(() => {
     if (gmTaps === 0) return;
     const timer = setTimeout(() => setGmTaps(0), 1000);
     return () => clearTimeout(timer);
   }, [gmTaps]);
 
-  // Funkcja: 5 tapnięć włącza GM (Mobile Friendly)
+  // 5 clicks/taps enables GM (Mobile Friendly)
   const handleSecretGmToggle = () => {
     soundService.play('click');
     const newTaps = gmTaps + 1;
@@ -44,7 +43,7 @@ const App: React.FC = () => {
       setIsGM(newState);
       setGmTaps(0);
 
-      // Wibracja (Haptic Feedback) - bzz bzz
+      // Haptic Feedback
       if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
 
       const msg = newState ? "GM MODE ACTIVATED" : "GM MODE DEACTIVATED";
@@ -52,7 +51,7 @@ const App: React.FC = () => {
     }
   };
 
-  // Funkcja: Przypisz gracza do tego urządzenia
+  // Assign player to device
   const claimPlayer = (id: string) => {
     const newIds = [...myPlayerIds, id];
     setMyPlayerIds(newIds);
@@ -163,7 +162,7 @@ const App: React.FC = () => {
     soundService.play('click');
     const newPlayer = createDefaultPlayer(players.length + 1);
 
-    // --- AUTOCLAIM: Nowy gracz jest mój ---
+    // Autoclaim
     claimPlayer(newPlayer.id);
 
     const list = [...players, newPlayer];
@@ -185,18 +184,17 @@ const App: React.FC = () => {
       const diff = updates.gear - p.gear;
       const sign = diff > 0 ? '+' : '';
       // Wynik: "[GM] Conan: Gear +2 (Total: 5)"
-      // Używamy t.gear jeśli dostępne, lub po prostu "Gear"
     const gearLabel = t.gear || "Gear";
     pushLogToCloud(`${actorPrefix}${p.name}: ${gearLabel} ${sign}${diff} (= ${updated.gear})`, 'info');
     }
 
-    // --- 2. Level logging ---
+
+    --- 2. Level logging ---
     if (updated.level !== undefined && updated.level !== p.level) {
       if (updated.level > p.level) {
         soundService.play('levelUp');
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
 
-        // Dodajemy prefix GM do wiadomości o awansie
         pushLogToCloud(`${actorPrefix}${p.name} ${t.leveledUp} ${updated.level}!`, 'success');
 
         if (updated.level === maxLevel) {
@@ -207,7 +205,6 @@ const App: React.FC = () => {
       }
       else if (updated.level < p.level) {
         soundService.play('levelDown');
-        // Dodajemy prefix GM do wiadomości o spadku
         pushLogToCloud(`${actorPrefix}${p.name} ${t.lostLevel}`, 'danger');
       }
     }
@@ -316,7 +313,7 @@ const App: React.FC = () => {
     className="relative group cursor-pointer select-none touch-manipulation"
     onClick={handleSecretGmToggle}
     >
-    {/* Glow effect - rośnie wraz z klikaniem */}
+    {/* Glow effect */}
     <div className={`absolute inset-0 blur-xl rounded-full transition-all duration-300
       ${isGM ? 'bg-red-600 opacity-60 animate-pulse' : 'bg-purple-600 opacity-20'}
       ${gmTaps > 0 && !isGM ? `opacity-${gmTaps * 20} bg-red-500` : ''}
@@ -329,7 +326,7 @@ const App: React.FC = () => {
         ${gmTaps > 0 ? 'scale-110' : ''}
         `}
         />
-        {/* Odliczanie dymkowe dla tapnięć */}
+        {/* Click counter */}
         {gmTaps > 0 && gmTaps < 5 && (
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-red-400 animate-bounce">
           {5 - gmTaps}
@@ -380,7 +377,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="space-y-4 mb-6">
-          {/* SEKCJA POTWORA */}
+          {/* Monster section */}
           <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-red-500/20">
           <span className="text-red-300 font-bold uppercase text-xs tracking-wider">{t.monster}</span>
           <div className="flex items-center gap-4">
@@ -398,7 +395,7 @@ const App: React.FC = () => {
           </div>
           </div>
 
-          {/* SEKCJA BONUSÓW GRACZY */}
+          {/* Player bonus section */}
           <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-blue-500/20">
           <span className="text-blue-300 font-bold uppercase text-xs tracking-wider">Party Bonus</span>
           <div className="flex items-center gap-4">
@@ -415,7 +412,7 @@ const App: React.FC = () => {
           <div className={`p-3 rounded-lg border text-center transition-colors ${playersWinning ? 'bg-green-500/20 border-green-500/50' : 'bg-slate-800 border-slate-700'}`}>
           <div className="text-xs uppercase text-slate-400 mb-1">{t.party}</div>
           <div className="text-3xl font-black text-white">{totalPlayerStrength}</div>
-          {/* Ikonka wygranej Wojownika przy remisie */}
+          {/* Warrior tie win icon */}
           {totalPlayerStrength === totalMonsterStrength && hasWarrior && (
             <div className="text-[10px] text-green-400 mt-1 uppercase tracking-widest flex justify-center items-center gap-1">
             <Sword size={10} /> Warrior Win

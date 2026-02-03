@@ -151,7 +151,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     <QuickAdjustButtons onAdjust={adjustLevel} disabled={disableLevel} />
     </div>
 
-    {/* --- GEAR SECTION (ZAWSZE OTWARTA) --- */}
+    {/* --- GEAR SECTION --- */}
     <div className="bg-slate-900/50 rounded-lg p-3 flex flex-col items-center border border-slate-700/50">
     <span className="text-[10px] text-blue-400 uppercase tracking-widest font-bold mb-1">{t.gear}</span>
     <div className="flex items-center justify-center gap-2">
