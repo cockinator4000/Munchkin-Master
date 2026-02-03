@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Player, GameLog, BattleState, Language } from './types';
 import PlayerCard from './components/PlayerCard';
 import { soundService } from './src/services/soundService';
-import { Plus, RotateCcw, X, ScrollText, Sword, Ghost, Zap, Share2, Skull, Shield } from 'lucide-react';
+import { Plus, RotateCcw, X, ScrollText, Sword, Ghost, Zap, Share2, Skull, Shield, Lock } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { translations } from './translations';
 // FIREBASE
@@ -33,7 +33,7 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [gmTaps]);
 
-  // Funkcja: 5 tapnięć włącza GM
+  // Funkcja: 5 tapnięć włącza GM (Mobile Friendly)
   const handleSecretGmToggle = () => {
     soundService.play('click');
     const newTaps = gmTaps + 1;
@@ -44,7 +44,7 @@ const App: React.FC = () => {
       setIsGM(newState);
       setGmTaps(0);
 
-      // Wibracja (Haptic Feedback)
+      // Wibracja (Haptic Feedback) - bzz bzz
       if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
 
       const msg = newState ? "GM MODE ACTIVATED" : "GM MODE DEACTIVATED";
@@ -240,7 +240,6 @@ const App: React.FC = () => {
     updateBattle({ selectedPlayerIds: newIds });
   };
 
-  // --- NEW: HANDLE PLAYER BONUS UI ---
   const handlePlayerBonus = (amount: number) => {
     const current = sanitizeBattle(battle);
     if (current.selectedPlayerIds.length === 0) return;
@@ -273,7 +272,6 @@ const App: React.FC = () => {
 
   const totalMonsterStrength = (battle?.monsterLevel || 1) + (battle?.monsterBonus || 0);
 
-  // --- WARRIOR RULE LOGIC ---
   const hasWarrior = safeSelectedIds.some(id => {
     const p = players.find(px => px.id === id);
     return p && (p.class === 'Warrior' || p.class === 'Wojownik');
@@ -297,7 +295,7 @@ const App: React.FC = () => {
     className="relative group cursor-pointer select-none touch-manipulation"
     onClick={handleSecretGmToggle}
     >
-    {/* Glow effect */}
+    {/* Glow effect - rośnie wraz z klikaniem */}
     <div className={`absolute inset-0 blur-xl rounded-full transition-all duration-300
       ${isGM ? 'bg-red-600 opacity-60 animate-pulse' : 'bg-purple-600 opacity-20'}
       ${gmTaps > 0 && !isGM ? `opacity-${gmTaps * 20} bg-red-500` : ''}
@@ -310,7 +308,7 @@ const App: React.FC = () => {
         ${gmTaps > 0 ? 'scale-110' : ''}
         `}
         />
-        {/* Odliczanie dymkowe dla tapnięć (opcjonalne) */}
+        {/* Odliczanie dymkowe dla tapnięć */}
         {gmTaps > 0 && gmTaps < 5 && (
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-red-400 animate-bounce">
           {5 - gmTaps}
@@ -320,7 +318,7 @@ const App: React.FC = () => {
 
         <div>
         <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 game-font tracking-wider">
-        {t.title} {isGM && <span className="text-red-500 text-sm align-top font-mono">[GM]</span>}
+        {t.title} {isGM && <span className="text-red-500 text-sm align-top font-mono animate-pulse">[GM]</span>}
         </h1>
         <p className="text-slate-400 text-xs tracking-widest uppercase flex items-center gap-2">
         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
@@ -392,7 +390,6 @@ const App: React.FC = () => {
           </div>
           </div>
 
-          {/* PODSUMOWANIE */}
           <div className="grid grid-cols-2 gap-4 mb-4">
           <div className={`p-3 rounded-lg border text-center transition-colors ${playersWinning ? 'bg-green-500/20 border-green-500/50' : 'bg-slate-800 border-slate-700'}`}>
           <div className="text-xs uppercase text-slate-400 mb-1">{t.party}</div>
@@ -454,15 +451,19 @@ const App: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {players.map(player => {
-          // --- LOGIKA DOSTĘPU UI ---
           const isMine = myPlayerIds.includes(player.id);
-          const canEdit = isGM || isMine;
+
+          // Another player: if not mine and not GM -> full interaction lock
+          const isTotallyLocked = !isMine && !isGM;
+
+          // Level Lock: if not GM -> level lock (even for me)
+          const isLevelLocked = !isGM;
 
           return (
             <div key={player.id} className="relative group">
-            {/* Przycisk walki (dostępny dla wszystkich do dodawania do walki) */}
+            {/* Battle button */}
             {battle.active && (
-              <div className="absolute -left-3 top-1/2 -translate-y-1/2 z-10">
+              <div className="absolute -left-3 top-1/2 -translate-y-1/2 z-20">
               <button
               onClick={() => toggleBattlePlayer(player.id)}
               className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all ${safeSelectedIds.includes(player.id) ? 'bg-green-500 text-white scale-110 ring-4 ring-green-500/30' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
@@ -472,28 +473,40 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Wrapper z blokadą interakcji */}
-            <div className={`transition-all duration-300 ${!canEdit ? 'pointer-events-none opacity-60 grayscale' : ''}`}>
-            <PlayerCard
-            player={player}
-            onUpdate={handleUpdatePlayer}
-            onDelete={handleDeletePlayer}
-            maxLevel={maxLevel}
-            lang={lang}
-            isInBattle={battle.active}
-            onToggleBattle={() => toggleBattlePlayer(player.id)}
-            />
-            </div>
+            {/* Card Wrapper */}
+            <div className={`transition-all duration-300 relative rounded-xl
+              ${isTotallyLocked ? 'pointer-events-none ring-1 ring-slate-700/50' : ''}
+              `}>
+              <PlayerCard
+              player={player}
+              onUpdate={handleUpdatePlayer}
+              onDelete={handleDeletePlayer}
+              maxLevel={maxLevel}
+              lang={lang}
+              isInBattle={battle.active}
+              onToggleBattle={() => toggleBattlePlayer(player.id)}
+              disableLevel={isLevelLocked}
+              />
 
-            {/* Opcjonalny wskaźnik blokady */}
-            {!canEdit && (
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              <span className="text-[10px] bg-black/80 text-white px-2 py-1 rounded border border-slate-700">
-              LOCKED
-              </span>
+              {/* Lock for nonGM */}
+              {isTotallyLocked && (
+                <div className="absolute top-3 right-3 z-10">
+                <div className="bg-slate-900/80 backdrop-blur-sm p-1.5 rounded-lg text-slate-500 shadow-sm border border-slate-700/50">
+                <Lock size={14} />
+                </div>
+                </div>
+              )}
               </div>
-            )}
-            </div>
+
+              {/* Tooltip for nonGM */}
+              {isTotallyLocked && (
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
+                <span className="text-[10px] font-bold bg-black/90 text-slate-300 px-2 py-1 rounded shadow-xl border border-slate-800">
+                {isGM ? "Podgląd" : "Brak uprawnień"}
+                </span>
+                </div>
+              )}
+              </div>
           );
         })}
 
