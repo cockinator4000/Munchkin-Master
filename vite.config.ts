@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+        includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
         manifest: {
         name: 'Munchkin Counter',
         short_name: 'Munchkin',
