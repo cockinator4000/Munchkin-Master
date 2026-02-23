@@ -239,7 +239,7 @@ const App: React.FC = () => {
     const newState = {
       ...current,
       active: !current.active,
-      selectedPlayerIds: []
+      selectedPlayerIds: !current.active ? (players.length > 0 ? [players[0].id] : []) : []
     };
     updateBattleCloud(newState);
   };
@@ -251,19 +251,12 @@ const App: React.FC = () => {
 
   const toggleBattlePlayer = (playerId: string) => {
     const current = sanitizeBattle(battle);
-    if (!current.active) {
-      updateBattle({
-        active: true,
-        selectedPlayerIds: [playerId]
-      });
-      return;
-    }
     const ids = current.selectedPlayerIds;
     const newIds = ids.includes(playerId)
     ? ids.filter(id => id !== playerId)
     : [...ids, playerId];
     updateBattle({ selectedPlayerIds: newIds });
-    };
+  };
 
   const handlePlayerBonus = (amount: number) => {
     const current = sanitizeBattle(battle);
@@ -487,6 +480,7 @@ const App: React.FC = () => {
           return (
             <div key={player.id} className="relative group">
             {/* Battle button */}
+            {battle.active && (
               <div className="absolute -left-3 top-1/2 -translate-y-1/2 z-20">
               <button
               onClick={() => toggleBattlePlayer(player.id)}
@@ -495,6 +489,7 @@ const App: React.FC = () => {
               {safeSelectedIds.includes(player.id) ? <Sword size={16} /> : <Plus size={16} />}
               </button>
               </div>
+            )}
 
             {/* Card Wrapper */}
             <div className={`transition-all duration-300 relative rounded-xl
