@@ -66,7 +66,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   );
 
   return (
-    <div className={`bg-slate-800 border ${isInBattle ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-slate-700'} rounded-xl p-5 shadow-xl transition-all hover:border-amber-500/50 relative group`}>
     <div className="absolute top-4 right-4 flex gap-2 z-10">
     <button
     onClick={(e) => {
@@ -75,36 +74,24 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     }}
     className={`p-2 rounded-lg transition-all duration-300 active:scale-90 ${
       isInBattle
-      ? 'text-white bg-orange-600 border border-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.6)] scale-110'
-      : 'text-slate-500 hover:text-orange-400 md:opacity-0 group-hover:opacity-100 bg-slate-900/60 border border-transparent hover:border-orange-500/30'
+      ? 'text-white bg-orange-600 border border-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.6)] scale-110 opacity-100'
+      : 'text-slate-500 hover:text-orange-400 bg-slate-900/60 border border-transparent hover:border-orange-500/30 opacity-100 md:opacity-0 group-hover:opacity-100'
     }`}
-    title={isInBattle ? "Remove" : "Battle"}
+    title={isInBattle ? "Usuń z areny" : "Dodaj do areny"}
     >
     <Sword size={18} />
     </button>
     <button
     onClick={(e) => {
       e.stopPropagation();
-      console.log('Delete clicked for', player.id);
       onDelete(player.id);
     }}
-    className="p-1.5 rounded text-slate-500 hover:text-red-400 md:opacity-0 group-hover:opacity-100 transition-all active:scale-90 bg-slate-900/40"
-    title="Delete"
+    className="p-2 rounded-lg text-slate-500 hover:text-red-400 bg-slate-900/40 transition-all active:scale-90 opacity-100 md:opacity-0 group-hover:opacity-100"
+    title="Usuń gracza"
     >
     <Trash2 size={18} />
     </button>
     </div>
-
-    <div className="flex items-center gap-4 mb-4">
-    <div
-    onClick={handleAvatarClick}
-    className="relative group/avatar cursor-pointer w-12 h-12 flex-shrink-0"
-    >
-    <div className="bg-amber-500 text-slate-900 rounded-full w-full h-full overflow-hidden flex items-center justify-center font-bold text-lg shadow-lg shadow-amber-500/20 border-2 border-slate-700">
-    {player.avatar ? (
-      <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
-    ) : (
-      player.name ? player.name.charAt(0).toUpperCase() : '?'
     )}
     </div>
     <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity">
