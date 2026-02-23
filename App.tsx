@@ -265,13 +265,12 @@ const App: React.FC = () => {
         active: true 
       });
     } else if (newIds.length === 0) {
-      // if arena closes -> clear all stats
       updateBattleCloud({ 
         active: false,
         monsterLevel: 1,
         monsterBonus: 0,
         selectedPlayerIds: [],
-        playerBonuses: {}
+        playerBonuses: {} 
       });
     } else {
       updateBattleCloud({ 
