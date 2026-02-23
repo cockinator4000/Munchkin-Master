@@ -66,15 +66,18 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   );
 
   return (
-    <div className={`bg-slate-800 border ${isInBattle ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-slate-700'} rounded-xl p-5 shadow-xl transition-all hover:border-amber-500/50 relative group`}>
     <div className="absolute top-4 right-4 flex gap-2 z-10">
     <button
     onClick={(e) => {
       e.stopPropagation();
       onToggleBattle?.();
     }}
-    className={`p-1.5 rounded transition-all active:scale-90 ${isInBattle ? 'text-amber-500 bg-amber-500/20' : 'text-slate-500 hover:text-amber-400 md:opacity-0 group-hover:opacity-100 bg-slate-900/40'}`}
-    title={isInBattle ? "Remove" : "Battle"}
+    className={`p-2 rounded-lg transition-all duration-300 active:scale-90 ${
+      isInBattle
+      ? 'text-white bg-orange-600 border border-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.6)] scale-110 opacity-100'
+      : 'text-slate-500 hover:text-orange-400 bg-slate-900/60 border border-transparent hover:border-orange-500/30 opacity-100 md:opacity-0 group-hover:opacity-100'
+    }`}
+    title={isInBattle ? "Usuń z areny" : "Dodaj do areny"}
     >
     <Sword size={18} />
     </button>
@@ -84,8 +87,8 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       console.log('Delete clicked for', player.id);
       onDelete(player.id);
     }}
-    className="p-1.5 rounded text-slate-500 hover:text-red-400 md:opacity-0 group-hover:opacity-100 transition-all active:scale-90 bg-slate-900/40"
-    title="Delete"
+    className="p-2 rounded-lg text-slate-500 hover:text-red-400 bg-slate-900/40 transition-all active:scale-90 opacity-100 md:opacity-0 group-hover:opacity-100"
+    title="Usuń gracza"
     >
     <Trash2 size={18} />
     </button>
