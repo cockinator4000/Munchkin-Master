@@ -66,6 +66,8 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   );
 
   return (
+    <div className={`bg-slate-800 border ${isInBattle ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-slate-700'} rounded-xl p-5 shadow-xl transition-all hover:border-amber-500/50 relative group`}>
+
     <div className="absolute top-4 right-4 flex gap-2 z-10">
     <button
     onClick={(e) => {
@@ -104,7 +106,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
     ) : (
       player.name ? player.name.charAt(0).toUpperCase() : '?'
-    )}
+    )}}
     </div>
     <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity">
     <Camera size={14} className="text-white" />
