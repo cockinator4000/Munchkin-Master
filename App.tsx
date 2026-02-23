@@ -257,9 +257,18 @@ const App: React.FC = () => {
     const newIds = isAdding
       ? [...ids, playerId]
       : ids.filter(id => id !== playerId);
+
+    // Arena autoclose logic  
+    let shouldBeActive = current.active;
+    if (isAdding) {
+      shouldBeActive = true;
+    } else if (newIds.length === 0) {
+      shouldBeActive = false;
+    }
+
     updateBattle({ 
       selectedPlayerIds: newIds,
-      active: isAdding ? true : current.active 
+      active: shouldBeActive 
     });
   };
 
