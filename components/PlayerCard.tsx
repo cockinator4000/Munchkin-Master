@@ -73,7 +73,11 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       e.stopPropagation();
       onToggleBattle?.();
     }}
-    className={`p-1.5 rounded transition-all active:scale-90 ${isInBattle ? 'text-amber-500 bg-amber-500/20' : 'text-slate-500 hover:text-amber-400 md:opacity-0 group-hover:opacity-100 bg-slate-900/40'}`}
+    className={`p-2 rounded-lg transition-all duration-300 active:scale-90 ${
+      isInBattle
+      ? 'text-white bg-orange-600 border border-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.6)] scale-110'
+      : 'text-slate-500 hover:text-orange-400 md:opacity-0 group-hover:opacity-100 bg-slate-900/60 border border-transparent hover:border-orange-500/30'
+    }`}
     title={isInBattle ? "Remove" : "Battle"}
     >
     <Sword size={18} />
