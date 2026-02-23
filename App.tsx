@@ -257,13 +257,14 @@ const App: React.FC = () => {
         selectedPlayerIds: [playerId]
       });
       return;
+    }
     const ids = current.selectedPlayerIds;
     const newIds = ids.includes(playerId)
     ? ids.filter(id => id !== playerId)
     : [...ids, playerId];
     updateBattle({ selectedPlayerIds: newIds });
     };
-  };
+
   const handlePlayerBonus = (amount: number) => {
     const current = sanitizeBattle(battle);
     if (current.selectedPlayerIds.length === 0) return;
@@ -290,7 +291,7 @@ const App: React.FC = () => {
   const totalPlayerStrength = safeSelectedIds.reduce((sum, id) => {
     const p = players.find(p => p.id === id);
     return sum + (p ? getCombatStrength(p) : 0);
-  }, 0);: !current.active ? (players.length > 0 ? [players[0].id] : []) :
+  }, 0);
 
   const totalPlayerBonuses = safeSelectedIds.reduce((sum, id) => sum + (battle.playerBonuses?.[id] || 0), 0);
 
