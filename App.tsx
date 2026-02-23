@@ -501,7 +501,7 @@ const App: React.FC = () => {
               onDelete={handleDeletePlayer}
               maxLevel={maxLevel}
               lang={lang}
-              isInBattle={battle.active}
+              isInBattle={safeSelectedIds.includes(player.id)}
               onToggleBattle={() => toggleBattlePlayer(player.id)}
               disableLevel={isLevelLocked}
               />
