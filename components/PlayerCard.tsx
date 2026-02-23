@@ -93,7 +93,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     </button>
     </div>
     )}
-    </div>
     <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity">
     <Camera size={14} className="text-white" />
     </div>
