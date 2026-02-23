@@ -16,8 +16,8 @@ const App: React.FC = () => {
   const [isSuperMunchkin, setIsSuperMunchkin] = useState(false);
 
   // --- GM & OWNERSHIP SYSTEM ---
-  const [isGM, setIsGM] = useState(false); // Tryb Boga
-  const [gmTaps, setGmTaps] = useState(0); // Licznik tapnięć w logo
+  const [isGM, setIsGM] = useState(false); // GameMaster toggle
+  const [gmTaps, setGmTaps] = useState(0); // Logo click counter
   const [myPlayerIds, setMyPlayerIds] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('my_players') || '[]');
@@ -252,10 +252,15 @@ const App: React.FC = () => {
   const toggleBattlePlayer = (playerId: string) => {
     const current = sanitizeBattle(battle);
     const ids = current.selectedPlayerIds;
-    const newIds = ids.includes(playerId)
-    ? ids.filter(id => id !== playerId)
-    : [...ids, playerId];
-    updateBattle({ selectedPlayerIds: newIds });
+    const isAdding = !ids.includes(playerId);
+    const newIds = isAdding
+    ? [...ids, playerId]
+    : ids.filter(id => id !== playerId);
+    
+    updateBattle({ 
+      selectedPlayerIds: newIds,
+      active: isAdding ? true : current.active
+     });
   };
 
   const handlePlayerBonus = (amount: number) => {
