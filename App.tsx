@@ -258,20 +258,29 @@ const App: React.FC = () => {
       ? [...ids, playerId]
       : ids.filter(id => id !== playerId);
 
-    
-    let nextActiveState = current.active;
     if (isAdding) {
-      nextActiveState = true;
+      updateBattleCloud({ 
+        ...current, 
+        selectedPlayerIds: newIds,
+        active: true 
+      });
     } else if (newIds.length === 0) {
-      nextActiveState = false;
+      // if arena closes -> clear all stats
+      updateBattleCloud({ 
+        active: false,
+        monsterLevel: 1,
+        monsterBonus: 0,
+        selectedPlayerIds: [],
+        playerBonuses: {}
+      });
+    } else {
+      updateBattleCloud({ 
+        ...current, 
+        selectedPlayerIds: newIds 
+      });
     }
-
-    updateBattleCloud({ 
-      ...current, 
-      selectedPlayerIds: newIds,
-      active: nextActiveState 
-    });
   };
+
   const handlePlayerBonus = (amount: number) => {
     const current = sanitizeBattle(battle);
     if (current.selectedPlayerIds.length === 0) return;
