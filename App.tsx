@@ -239,7 +239,7 @@ const App: React.FC = () => {
     const newState = {
       ...current,
       active: !current.active,
-      selectedPlayerIds: !current.active ? (players.length > 0 ? [players[0].id] : []) : []
+      selectedPlayerIds: []
     };
     updateBattleCloud(newState);
   };
@@ -251,6 +251,12 @@ const App: React.FC = () => {
 
   const toggleBattlePlayer = (playerId: string) => {
     const current = sanitizeBattle(battle);
+    if (!current.active) {
+      updateBattle({
+        active: true,
+        selectedPlayerIds: [playerId]
+      });
+      return;
     const ids = current.selectedPlayerIds;
     const newIds = ids.includes(playerId)
     ? ids.filter(id => id !== playerId)
