@@ -495,7 +495,6 @@ const App: React.FC = () => {
               {safeSelectedIds.includes(player.id) ? <Sword size={16} /> : <Plus size={16} />}
               </button>
               </div>
-            }
 
             {/* Card Wrapper */}
             <div className={`transition-all duration-300 relative rounded-xl
