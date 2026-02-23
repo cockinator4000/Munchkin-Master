@@ -258,20 +258,20 @@ const App: React.FC = () => {
       ? [...ids, playerId]
       : ids.filter(id => id !== playerId);
 
-    // Arena autoclose logic  
-    let shouldBeActive = current.active;
+    
+    let nextActiveState = current.active;
     if (isAdding) {
-      shouldBeActive = true;
+      nextActiveState = true;
     } else if (newIds.length === 0) {
-      shouldBeActive = false;
+      nextActiveState = false;
     }
 
-    updateBattle({ 
+    updateBattleCloud({ 
+      ...current, 
       selectedPlayerIds: newIds,
-      active: shouldBeActive 
+      active: nextActiveState 
     });
   };
-
   const handlePlayerBonus = (amount: number) => {
     const current = sanitizeBattle(battle);
     if (current.selectedPlayerIds.length === 0) return;
