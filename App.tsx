@@ -252,15 +252,15 @@ const App: React.FC = () => {
   const toggleBattlePlayer = (playerId: string) => {
     const current = sanitizeBattle(battle);
     const ids = current.selectedPlayerIds;
+    
     const isAdding = !ids.includes(playerId);
     const newIds = isAdding
-    ? [...ids, playerId]
-    : ids.filter(id => id !== playerId);
-    
+      ? [...ids, playerId]
+      : ids.filter(id => id !== playerId);
     updateBattle({ 
       selectedPlayerIds: newIds,
-      active: isAdding ? true : current.active
-     });
+      active: isAdding ? true : current.active 
+    });
   };
 
   const handlePlayerBonus = (amount: number) => {
@@ -484,17 +484,6 @@ const App: React.FC = () => {
 
           return (
             <div key={player.id} className="relative group">
-            {/* Battle button */}
-            {battle.active && (
-              <div className="absolute -left-3 top-1/2 -translate-y-1/2 z-20">
-              <button
-              onClick={() => toggleBattlePlayer(player.id)}
-              className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all ${safeSelectedIds.includes(player.id) ? 'bg-green-500 text-white scale-110 ring-4 ring-green-500/30' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
-              >
-              {safeSelectedIds.includes(player.id) ? <Sword size={16} /> : <Plus size={16} />}
-              </button>
-              </div>
-            )}
 
             {/* Card Wrapper */}
             <div className={`transition-all duration-300 relative rounded-xl
