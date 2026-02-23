@@ -487,7 +487,6 @@ const App: React.FC = () => {
           return (
             <div key={player.id} className="relative group">
             {/* Battle button */}
-            {battle.active && (
               <div className="absolute -left-3 top-1/2 -translate-y-1/2 z-20">
               <button
               onClick={() => toggleBattlePlayer(player.id)}
@@ -496,7 +495,7 @@ const App: React.FC = () => {
               {safeSelectedIds.includes(player.id) ? <Sword size={16} /> : <Plus size={16} />}
               </button>
               </div>
-            )}
+            }
 
             {/* Card Wrapper */}
             <div className={`transition-all duration-300 relative rounded-xl
