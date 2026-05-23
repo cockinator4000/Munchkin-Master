@@ -273,12 +273,19 @@ const App: React.FC = () => {
   // --- BATTLE HANDLERS ---
   const toggleBattleMode = () => {
     const current = sanitizeBattle(battle);
-    const newState = {
-      ...current,
-      active: !current.active,
-      selectedPlayerIds: !current.active ? (players.length > 0 ? [players[0].id] : []) : []
-    };
-    updateBattleCloud(newState);
+    if (current.active) {
+      // Zamykanie walki -> Pełny reset do wartości domyślnych
+      updateBattleCloud(defaultBattle);
+    } else {
+      // Otwieranie walki -> Czysty start z pierwszym graczem (jeśli istnieje)
+      updateBattleCloud({
+        active: true,
+        monsterLevel: 1,
+        monsterBonus: 0,
+        selectedPlayerIds: players.length > 0 ? [players[0].id] : [],
+        playerBonuses: {}
+      });
+    }
   };
 
   const updateBattle = (updates: Partial<BattleState>) => {
@@ -302,13 +309,7 @@ const App: React.FC = () => {
         active: true 
       });
     } else if (newIds.length === 0) {
-      updateBattleCloud({ 
-        active: false,
-        monsterLevel: 1,
-        monsterBonus: 0,
-        selectedPlayerIds: [],
-        playerBonuses: {} 
-      });
+      updateBattleCloud(defaultBattle);
     } else {
       updateBattleCloud({ 
         ...current, 
