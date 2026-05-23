@@ -15,6 +15,29 @@ const App: React.FC = () => {
   const [logs, setLogs] = useState<GameLog[]>([]);
   const [isSuperMunchkin, setIsSuperMunchkin] = useState(false);
 
+  // --- KOSTKA D6 STATE & LOGIC ---
+  const [roll, setRoll] = useState<number>(1);
+  const [isRolling, setIsRolling] = useState<boolean>(false);
+
+  const handleRollDice = () => {
+    if (isRolling) return;
+    soundService.play('click');
+    setIsRolling(true);
+
+    // Animacja turlania kostki
+    setTimeout(() => {
+      const result = Math.floor(Math.random() * 6) + 1;
+      setRoll(result);
+      setIsRolling(false);
+
+      // Logowanie rzutu dla wszystkich w pokoju multiplayer
+      const logMsg = lang === 'pl' 
+        ? `Kostka d6: wyrzucono ${result}` 
+        : `Dice d6: rolled ${result}`;
+      pushLogToCloud(logMsg, 'info');
+    }, 400);
+  };
+
   // --- GM & OWNERSHIP SYSTEM ---
   const [isGM, setIsGM] = useState(false); // GameMaster toggle
   const [gmTaps, setGmTaps] = useState(0); // Logo click counter
@@ -149,13 +172,13 @@ const App: React.FC = () => {
 
   const createDefaultPlayer = (index: number = 1): Player => ({
     id: Math.random().toString(36).substring(2, 11),
-                                                              name: `${lang === 'en' ? 'Player' : 'Gracz'} ${index}`,
-                                                              level: 1,
-                                                              gear: 0,
-                                                              gender: 'Male',
-                                                              class: t.classes[0],
-                                                              race: t.races[0],
-                                                              isSuper: false
+    name: `${lang === 'en' ? 'Player' : 'Gracz'} ${index}`,
+    level: 1,
+    gear: 0,
+    gender: 'Male',
+    class: t.classes[0],
+    race: t.races[0],
+    isSuper: false
   });
 
   const handleAddPlayer = () => {
@@ -180,36 +203,34 @@ const App: React.FC = () => {
       const actorPrefix = isGM ? '[GM] ' : '';
 
       // --- 1. Logging inventory ---
-    if (updates.gear !== undefined && updates.gear !== p.gear) {
-      const diff = updates.gear - p.gear;
-      const sign = diff > 0 ? '+' : '';
-      // Wynik: "[GM] Conan: Gear +2 (Total: 5)"
-    const gearLabel = t.gear || "Gear";
-    pushLogToCloud(`${actorPrefix}${p.name}: ${gearLabel} ${sign}${diff} (= ${updated.gear})`, 'info');
-    }
+      if (updates.gear !== undefined && updates.gear !== p.gear) {
+        const diff = updates.gear - p.gear;
+        const sign = diff > 0 ? '+' : '';
+        const gearLabel = t.gear || "Gear";
+        pushLogToCloud(`${actorPrefix}${p.name}: ${gearLabel} ${sign}${diff} (= ${updated.gear})`, 'info');
+      }
 
+      // --- 2. Level logging ---
+      if (updated.level !== undefined && updated.level !== p.level) {
+        if (updated.level > p.level) {
+          soundService.play('levelUp');
+          confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
 
-    // --- 2. Level logging ---
-    if (updated.level !== undefined && updated.level !== p.level) {
-      if (updated.level > p.level) {
-        soundService.play('levelUp');
-        confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+          pushLogToCloud(`${actorPrefix}${p.name} ${t.leveledUp} ${updated.level}!`, 'success');
 
-        pushLogToCloud(`${actorPrefix}${p.name} ${t.leveledUp} ${updated.level}!`, 'success');
-
-        if (updated.level === maxLevel) {
-          soundService.play('victory');
-          confetti({ particleCount: 200, spread: 100 });
-          pushLogToCloud(`${actorPrefix}${p.name} ${t.victory}`, 'warning');
+          if (updated.level === maxLevel) {
+            soundService.play('victory');
+            confetti({ particleCount: 200, spread: 100 });
+            pushLogToCloud(`${actorPrefix}${p.name} ${t.victory}`, 'warning');
+          }
+        }
+        else if (updated.level < p.level) {
+          soundService.play('levelDown');
+          pushLogToCloud(`${actorPrefix}${p.name} ${t.lostLevel}`, 'danger');
         }
       }
-      else if (updated.level < p.level) {
-        soundService.play('levelDown');
-        pushLogToCloud(`${actorPrefix}${p.name} ${t.lostLevel}`, 'danger');
-      }
-    }
 
-    return updated;
+      return updated;
     });
 
     updateCloud(list);
@@ -327,229 +348,248 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-6 font-sans selection:bg-purple-500/30">
-    <header className="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
-    <div className="flex items-center gap-4">
+      <header className="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          {/* LOGO - TAP 5 TIMES TO UNLOCK GM */}
+          <div
+            className="relative group cursor-pointer select-none touch-manipulation"
+            onClick={handleSecretGmToggle}
+          >
+            {/* Glow effect */}
+            <div className={`absolute inset-0 blur-xl rounded-full transition-all duration-300
+              ${isGM ? 'bg-red-600 opacity-60 animate-pulse' : 'bg-purple-600 opacity-20'}
+              ${gmTaps > 0 && !isGM ? `opacity-${gmTaps * 20} bg-red-500` : ''}
+            `}></div>
 
-    {/* LOGO - TAP 5 TIMES TO UNLOCK GM */}
-    <div
-    className="relative group cursor-pointer select-none touch-manipulation"
-    onClick={handleSecretGmToggle}
-    >
-    {/* Glow effect */}
-    <div className={`absolute inset-0 blur-xl rounded-full transition-all duration-300
-      ${isGM ? 'bg-red-600 opacity-60 animate-pulse' : 'bg-purple-600 opacity-20'}
-      ${gmTaps > 0 && !isGM ? `opacity-${gmTaps * 20} bg-red-500` : ''}
-      `}></div>
-
-      <img
-      src="https://img.icons8.com/color/96/dungeons-and-dragons.png"
-      alt="Logo"
-      className={`w-16 h-16 relative z-10 drop-shadow-lg transition-transform active:scale-95
-        ${gmTaps > 0 ? 'scale-110' : ''}
-        `}
-        />
-        {/* Click counter */}
-        {gmTaps > 0 && gmTaps < 5 && (
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-red-400 animate-bounce">
-          {5 - gmTaps}
+            <img
+              src="https://img.icons8.com/color/96/dungeons-and-dragons.png"
+              alt="Logo"
+              className={`w-16 h-16 relative z-10 drop-shadow-lg transition-transform active:scale-95
+                ${gmTaps > 0 ? 'scale-110' : ''}
+              `}
+            />
+            {/* Click counter */}
+            {gmTaps > 0 && gmTaps < 5 && (
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-red-400 animate-bounce">
+                {5 - gmTaps}
+              </div>
+            )}
           </div>
-        )}
-        </div>
 
-        <div>
-        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 game-font tracking-wider">
-        {t.title} {isGM && <span className="text-red-500 text-sm align-top font-mono animate-pulse">[GM]</span>}
-        </h1>
-        <p className="text-slate-400 text-xs tracking-widest uppercase flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-        Live Session
-        </p>
-        </div>
+          <div>
+            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 game-font tracking-wider">
+              {t.title} {isGM && <span className="text-red-500 text-sm align-top font-mono animate-pulse">[GM]</span>}
+            </h1>
+            <p className="text-slate-400 text-xs tracking-widest uppercase flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              Live Session
+            </p>
+          </div>
         </div>
 
         <div className="flex gap-3">
-        <button onClick={copyLink} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold shadow-lg shadow-indigo-500/20 active:scale-95 transition-all">
-        <Share2 size={18} /> Invite
-        </button>
-        <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700/50">
-        <button onClick={() => setLang('en')} className={`px-3 py-1 rounded text-xs font-bold ${lang === 'en' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}>EN</button>
-        <button onClick={() => setLang('pl')} className={`px-3 py-1 rounded text-xs font-bold ${lang === 'pl' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}>PL</button>
-        </div>
-        </div>
-        </header>
-
-        <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <div className="lg:col-span-1 space-y-6">
-        <div className={`relative overflow-hidden rounded-2xl border transition-all duration-500 ${battle.active ? 'bg-slate-800/80 border-red-500/50 shadow-red-900/20 shadow-2xl' : 'bg-slate-800/40 border-slate-700/50 border-dashed hover:border-slate-600'}`}>
-        {!battle.active ? (
-          <button onClick={toggleBattleMode} className="w-full h-32 flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-red-400 transition-colors group">
-          <div className="p-3 rounded-full bg-slate-800 group-hover:scale-110 transition-transform duration-300 border border-slate-700">
-          <Sword size={32} />
-          </div>
-          <span className="font-game text-xl tracking-wide">{t.battleArena}</span>
+          <button onClick={copyLink} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold shadow-lg shadow-indigo-500/20 active:scale-95 transition-all">
+            <Share2 size={18} /> Invite
           </button>
-        ) : (
-          <div className="p-5 animate-in zoom-in-95 duration-300">
-          <div className="flex justify-between items-start mb-6">
-          <h2 className="text-xl font-bold text-red-400 flex items-center gap-2 game-font">
-          <Skull size={24} /> {t.battleArena}
-          </h2>
-          <button onClick={toggleBattleMode} className="text-slate-500 hover:text-white"><X size={20} /></button>
+          <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700/50">
+            <button onClick={() => setLang('en')} className={`px-3 py-1 rounded text-xs font-bold ${lang === 'en' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}>EN</button>
+            <button onClick={() => setLang('pl')} className={`px-3 py-1 rounded text-xs font-bold ${lang === 'pl' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}>PL</button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 space-y-6">
+          {/* BATTLE ARENA */}
+          <div className={`relative overflow-hidden rounded-2xl border transition-all duration-500 ${battle.active ? 'bg-slate-800/80 border-red-500/50 shadow-red-900/20 shadow-2xl' : 'bg-slate-800/40 border-slate-700/50 border-dashed hover:border-slate-600'}`}>
+            {!battle.active ? (
+              <button onClick={toggleBattleMode} className="w-full h-32 flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-red-400 transition-colors group">
+                <div className="p-3 rounded-full bg-slate-800 group-hover:scale-110 transition-transform duration-300 border border-slate-700">
+                  <Sword size={32} />
+                </div>
+                <span className="font-game text-xl tracking-wide">{t.battleArena}</span>
+              </button>
+            ) : (
+              <div className="p-5 animate-in zoom-in-95 duration-300">
+                <div className="flex justify-between items-start mb-6">
+                  <h2 className="text-xl font-bold text-red-400 flex items-center gap-2 game-font">
+                    <Skull size={24} /> {t.battleArena}
+                  </h2>
+                  <button onClick={toggleBattleMode} className="text-slate-500 hover:text-white"><X size={20} /></button>
+                </div>
+
+                <div className="space-y-4 mb-6">
+                  {/* Monster section */}
+                  <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-red-500/20">
+                    <span className="text-red-300 font-bold uppercase text-xs tracking-wider">{t.monster}</span>
+                    <div className="flex items-center gap-4">
+                      <button onClick={() => updateBattle({ monsterLevel: Math.max(1, (battle.monsterLevel || 1) - 1) })} className="w-8 h-8 rounded bg-slate-700 text-white">-</button>
+                      <span className="text-3xl font-black text-white w-12 text-center">{battle.monsterLevel || 1}</span>
+                      <button onClick={() => updateBattle({ monsterLevel: (battle.monsterLevel || 1) + 1 })} className="w-8 h-8 rounded bg-slate-700 text-white">+</button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-orange-500/20">
+                    <span className="text-orange-300 font-bold uppercase text-xs tracking-wider">{t.oneShots}</span>
+                    <div className="flex items-center gap-4">
+                      <button onClick={() => updateBattle({ monsterBonus: (battle.monsterBonus || 0) - 5 })} className="w-8 h-8 rounded bg-slate-700 text-white text-xs">-5</button>
+                      <span className="text-xl font-bold text-white w-12 text-center">{(battle.monsterBonus || 0) > 0 ? '+' : ''}{battle.monsterBonus || 0}</span>
+                      <button onClick={() => updateBattle({ monsterBonus: (battle.monsterBonus || 0) + 5 })} className="w-8 h-8 rounded bg-slate-700 text-white text-xs">+5</button>
+                    </div>
+                  </div>
+
+                  {/* Player bonus section */}
+                  <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-blue-500/20">
+                    <span className="text-blue-300 font-bold uppercase text-xs tracking-wider">Party Bonus</span>
+                    <div className="flex items-center gap-4">
+                      <button onClick={() => handlePlayerBonus(-1)} className="w-8 h-8 rounded bg-slate-700 text-white">-</button>
+                      <span className="text-xl font-bold text-white w-12 text-center">
+                        {totalPlayerBonuses > 0 ? '+' : ''}{totalPlayerBonuses}
+                      </span>
+                      <button onClick={() => handlePlayerBonus(1)} className="w-8 h-8 rounded bg-slate-700 text-white">+</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className={`p-3 rounded-lg border text-center transition-colors ${playersWinning ? 'bg-green-500/20 border-green-500/50' : 'bg-slate-800 border-slate-700'}`}>
+                    <div className="text-xs uppercase text-slate-400 mb-1">{t.party}</div>
+                    <div className="text-3xl font-black text-white">{totalPlayerStrength}</div>
+                    {/* Warrior tie win icon */}
+                    {totalPlayerStrength === totalMonsterStrength && hasWarrior && (
+                      <div className="text-[10px] text-green-400 mt-1 uppercase tracking-widest flex justify-center items-center gap-1">
+                        <Sword size={10} /> Warrior Win
+                      </div>
+                    )}
+                  </div>
+                  <div className={`p-3 rounded-lg border text-center transition-colors ${!playersWinning ? 'bg-red-500/20 border-red-500/50' : 'bg-slate-800 border-slate-700'}`}>
+                    <div className="text-xs uppercase text-slate-400 mb-1">{t.threatLevel}</div>
+                    <div className="text-3xl font-black text-white">{totalMonsterStrength}</div>
+                  </div>
+                </div>
+
+                <div className={`p-3 rounded-lg font-bold text-center text-lg animate-pulse mb-4 ${playersWinning ? 'bg-green-600 text-white shadow-lg shadow-green-900/50' : 'bg-red-600 text-white shadow-lg shadow-red-900/50'}`}>
+                  {playersWinning ? t.playersWinning : t.monsterWinning}
+                </div>
+
+                {/* KOSTKA D6 WEWNĄTRZ ARENY WALKI */}
+                <div className="pt-4 border-t border-slate-700/50 flex items-center justify-between gap-4 animate-in fade-in duration-300">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold uppercase text-red-400">
+                      {lang === 'pl' ? 'Kostka d6 (Ucieczka)' : 'd6 Dice (Escape)'}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {lang === 'pl' ? 'Rzuć, aby uciec przed potworem!' : 'Roll to run away!'}
+                    </span>
+                  </div>
+                  
+                  <button
+                    onClick={handleRollDice}
+                    disabled={isRolling}
+                    className={`w-12 h-12 bg-slate-900 border-2 border-red-500/30 rounded-xl flex items-center justify-center text-xl font-black text-red-400 shadow-md hover:border-red-500 hover:text-red-300 transition-all cursor-pointer outline-none focus:ring-1 focus:ring-red-400/50 ${isRolling ? 'rotate-[360deg] scale-90' : 'active:scale-95'}`}
+                  >
+                    {roll}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-4 mb-6">
-          {/* Monster section */}
-          <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-red-500/20">
-          <span className="text-red-300 font-bold uppercase text-xs tracking-wider">{t.monster}</span>
-          <div className="flex items-center gap-4">
-          <button onClick={() => updateBattle({ monsterLevel: Math.max(1, (battle.monsterLevel || 1) - 1) })} className="w-8 h-8 rounded bg-slate-700 text-white">-</button>
-          <span className="text-3xl font-black text-white w-12 text-center">{battle.monsterLevel || 1}</span>
-          <button onClick={() => updateBattle({ monsterLevel: (battle.monsterLevel || 1) + 1 })} className="w-8 h-8 rounded bg-slate-700 text-white">+</button>
-          </div>
-          </div>
-          <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-orange-500/20">
-          <span className="text-orange-300 font-bold uppercase text-xs tracking-wider">{t.oneShots}</span>
-          <div className="flex items-center gap-4">
-          <button onClick={() => updateBattle({ monsterBonus: (battle.monsterBonus || 0) - 5 })} className="w-8 h-8 rounded bg-slate-700 text-white text-xs">-5</button>
-          <span className="text-xl font-bold text-white w-12 text-center">{(battle.monsterBonus || 0) > 0 ? '+' : ''}{battle.monsterBonus || 0}</span>
-          <button onClick={() => updateBattle({ monsterBonus: (battle.monsterBonus || 0) + 5 })} className="w-8 h-8 rounded bg-slate-700 text-white text-xs">+5</button>
-          </div>
-          </div>
-
-          {/* Player bonus section */}
-          <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-blue-500/20">
-          <span className="text-blue-300 font-bold uppercase text-xs tracking-wider">Party Bonus</span>
-          <div className="flex items-center gap-4">
-          <button onClick={() => handlePlayerBonus(-1)} className="w-8 h-8 rounded bg-slate-700 text-white">-</button>
-          <span className="text-xl font-bold text-white w-12 text-center">
-          {totalPlayerBonuses > 0 ? '+' : ''}{totalPlayerBonuses}
-          </span>
-          <button onClick={() => handlePlayerBonus(1)} className="w-8 h-8 rounded bg-slate-700 text-white">+</button>
-          </div>
-          </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className={`p-3 rounded-lg border text-center transition-colors ${playersWinning ? 'bg-green-500/20 border-green-500/50' : 'bg-slate-800 border-slate-700'}`}>
-          <div className="text-xs uppercase text-slate-400 mb-1">{t.party}</div>
-          <div className="text-3xl font-black text-white">{totalPlayerStrength}</div>
-          {/* Warrior tie win icon */}
-          {totalPlayerStrength === totalMonsterStrength && hasWarrior && (
-            <div className="text-[10px] text-green-400 mt-1 uppercase tracking-widest flex justify-center items-center gap-1">
-            <Sword size={10} /> Warrior Win
+          {/* DUNGEON LOG */}
+          <div className="bg-slate-800/50 rounded-2xl border border-slate-700/50 p-4 h-[300px] flex flex-col relative overflow-hidden backdrop-blur-sm">
+            <h3 className="text-xs font-bold uppercase text-slate-500 mb-3 flex items-center gap-2"><ScrollText size={14} /> {t.dungeonLog}</h3>
+            <div className="overflow-y-auto flex-1 space-y-3 pr-2 custom-scrollbar">
+              {logs.map(log => (
+                <div key={log.id} className="text-sm flex flex-col gap-1 animate-in slide-in-from-left duration-300">
+                  <div className="flex gap-3">
+                    <span className="text-slate-600 font-mono text-xs mt-0.5 whitespace-nowrap">
+                      {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <p className={`${log.type === 'success' ? 'text-green-400' : ''} ${log.type === 'danger' ? 'text-red-400' : ''} ${log.type === 'warning' ? 'text-amber-400 font-bold' : ''} ${log.type === 'info' ? 'text-slate-300' : ''}`}>
+                      {log.message}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {logs.length === 0 && <div className="text-slate-600 text-sm italic">{t.silenceInDungeon}</div>}
             </div>
-          )}
           </div>
-          <div className={`p-3 rounded-lg border text-center transition-colors ${!playersWinning ? 'bg-red-500/20 border-red-500/50' : 'bg-slate-800 border-slate-700'}`}>
-          <div className="text-xs uppercase text-slate-400 mb-1">{t.threatLevel}</div>
-          <div className="text-3xl font-black text-white">{totalMonsterStrength}</div>
-          </div>
-          </div>
-
-          <div className={`p-3 rounded-lg font-bold text-center text-lg animate-pulse ${playersWinning ? 'bg-green-600 text-white shadow-lg shadow-green-900/50' : 'bg-red-600 text-white shadow-lg shadow-red-900/50'}`}>
-          {playersWinning ? t.playersWinning : t.monsterWinning}
-          </div>
-          </div>
-        )}
-        </div>
-
-        <div className="bg-slate-800/50 rounded-2xl border border-slate-700/50 p-4 h-[300px] flex flex-col relative overflow-hidden backdrop-blur-sm">
-        <h3 className="text-xs font-bold uppercase text-slate-500 mb-3 flex items-center gap-2"><ScrollText size={14} /> {t.dungeonLog}</h3>
-        <div className="overflow-y-auto flex-1 space-y-3 pr-2 custom-scrollbar">
-        {logs.map(log => (
-          <div key={log.id} className="text-sm flex flex-col gap-1 animate-in slide-in-from-left duration-300">
-          <div className="flex gap-3">
-          <span className="text-slate-600 font-mono text-xs mt-0.5 whitespace-nowrap">
-          {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
-          <p className={`${log.type === 'success' ? 'text-green-400' : ''} ${log.type === 'danger' ? 'text-red-400' : ''} ${log.type === 'warning' ? 'text-amber-400 font-bold' : ''} ${log.type === 'info' ? 'text-slate-300' : ''}`}>
-          {log.message}
-          </p>
-          </div>
-          </div>
-        ))}
-        {logs.length === 0 && <div className="text-slate-600 text-sm italic">{t.silenceInDungeon}</div>}
-        </div>
-        </div>
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-        <div className="flex flex-wrap gap-3">
-        <button onClick={handleAddPlayer} className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 group">
-        <div className="bg-white/20 p-1 rounded-full group-hover:scale-110 transition-transform"><Plus size={18} strokeWidth={3} /></div>
-        {t.addPlayer}
-        </button>
-        <button onClick={() => setIsSuperMunchkin(!isSuperMunchkin)} className={`px-4 py-3 rounded-xl font-bold border transition-all flex items-center gap-2 ${isSuperMunchkin ? 'bg-purple-600 border-purple-400 text-white shadow-lg shadow-purple-900/30' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'}`}>
-        <Zap size={18} className={isSuperMunchkin ? 'fill-white' : ''} />
-        {t.superMode}
-        </button>
-        <button onClick={handleResetGame} className="px-4 py-3 rounded-xl font-bold bg-slate-800 border border-slate-700 text-red-400 hover:bg-red-900/20 hover:border-red-500/50 hover:text-red-300 transition-all flex items-center gap-2" title={t.reset}>
-        <RotateCcw size={18} />
-        </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {players.map(player => {
-          const isMine = myPlayerIds.includes(player.id);
-
-          // Another player: if not mine and not GM -> full interaction lock
-          const isTotallyLocked = !isMine && !isGM;
-
-          // Level Lock: if not GM -> level lock (even for me)
-          const isLevelLocked = !isGM;
-
-          return (
-            <div key={player.id} className="relative group">
-
-            {/* Card Wrapper */}
-            <div className={`transition-all duration-300 relative rounded-xl
-              ${isTotallyLocked ? 'pointer-events-none ring-1 ring-slate-700/50' : ''}
-              `}>
-              <PlayerCard
-              player={player}
-              onUpdate={handleUpdatePlayer}
-              onDelete={handleDeletePlayer}
-              maxLevel={maxLevel}
-              lang={lang}
-              isInBattle={safeSelectedIds.includes(player.id)}
-              onToggleBattle={() => toggleBattlePlayer(player.id)}
-              disableLevel={isLevelLocked}
-              />
-
-              {/* Lock for nonGM */}
-              {isTotallyLocked && (
-                <div className="absolute top-3 right-3 z-10">
-                <div className="bg-slate-900/80 backdrop-blur-sm p-1.5 rounded-lg text-slate-500 shadow-sm border border-slate-700/50">
-                <Lock size={14} />
-                </div>
-                </div>
-              )}
-              </div>
-
-              {/* Tooltip for nonGM */}
-              {isTotallyLocked && (
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
-                <span className="text-[10px] font-bold bg-black/90 text-slate-300 px-2 py-1 rounded shadow-xl border border-slate-800">
-                {isGM ? "Podgląd" : "Brak uprawnień"}
-                </span>
-                </div>
-              )}
-              </div>
-          );
-        })}
-
-        {players.length === 0 && (
-          <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-800 rounded-2xl">
-          <Ghost className="mx-auto text-slate-700 mb-4" size={48} />
-          <p className="text-slate-500 font-medium">{t.silenceInDungeon}</p>
-          <p className="text-slate-600 text-sm mt-1">Click "Add Player" to start the adventure</p>
+          <div className="flex flex-wrap gap-3">
+            <button onClick={handleAddPlayer} className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 group">
+              <div className="bg-white/20 p-1 rounded-full group-hover:scale-110 transition-transform"><Plus size={18} strokeWidth={3} /></div>
+              {t.addPlayer}
+            </button>
+            <button onClick={() => setIsSuperMunchkin(!isSuperMunchkin)} className={`px-4 py-3 rounded-xl font-bold border transition-all flex items-center gap-2 ${isSuperMunchkin ? 'bg-purple-600 border-purple-400 text-white shadow-lg shadow-purple-900/30' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'}`}>
+              <Zap size={18} className={isSuperMunchkin ? 'fill-white' : ''} />
+              {t.superMode}
+            </button>
+            <button onClick={handleResetGame} className="px-4 py-3 rounded-xl font-bold bg-slate-800 border border-slate-700 text-red-400 hover:bg-red-900/20 hover:border-red-500/50 hover:text-red-300 transition-all flex items-center gap-2" title={t.reset}>
+              <RotateCcw size={18} />
+            </button>
           </div>
-        )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {players.map(player => {
+              const isMine = myPlayerIds.includes(player.id);
+
+              // Another player: if not mine and not GM -> full interaction lock
+              const isTotallyLocked = !isMine && !isGM;
+
+              // Level Lock: if not GM -> level lock (even for me)
+              const isLevelLocked = !isGM;
+
+              return (
+                <div key={player.id} className="relative group">
+                  {/* Card Wrapper */}
+                  <div className={`transition-all duration-300 relative rounded-xl
+                    ${isTotallyLocked ? 'pointer-events-none ring-1 ring-slate-700/50' : ''}
+                  `}>
+                    <PlayerCard
+                      player={player}
+                      onUpdate={handleUpdatePlayer}
+                      onDelete={handleDeletePlayer}
+                      maxLevel={maxLevel}
+                      lang={lang}
+                      isInBattle={safeSelectedIds.includes(player.id)}
+                      onToggleBattle={() => toggleBattlePlayer(player.id)}
+                      disableLevel={isLevelLocked}
+                    />
+
+                    {/* Lock for nonGM */}
+                    {isTotallyLocked && (
+                      <div className="absolute top-3 right-3 z-10">
+                        <div className="bg-slate-900/80 backdrop-blur-sm p-1.5 rounded-lg text-slate-500 shadow-sm border border-slate-700/50">
+                          <Lock size={14} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tooltip for nonGM */}
+                  {isTotallyLocked && (
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
+                      <span className="text-[10px] font-bold bg-black/90 text-slate-300 px-2 py-1 rounded shadow-xl border border-slate-800">
+                        {isGM ? "Podgląd" : "Brak uprawnień"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {players.length === 0 && (
+              <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-800 rounded-2xl">
+                <Ghost className="mx-auto text-slate-700 mb-4" size={48} />
+                <p className="text-slate-500 font-medium">{t.silenceInDungeon}</p>
+                <p className="text-slate-600 text-sm mt-1">Click "Add Player" to start the adventure</p>
+              </div>
+            )}
+          </div>
         </div>
-        </div>
-        </main>
-        </div>
+      </main>
+    </div>
   );
 }
 
