@@ -24,18 +24,34 @@ const App: React.FC = () => {
     soundService.play('click');
     setIsRolling(true);
 
-    // Animacja turlania kostki
-    setTimeout(() => {
-      const result = Math.floor(Math.random() * 6) + 1;
-      setRoll(result);
-      setIsRolling(false);
+    // Efekt szybkiego przeskakiwania cyfr podczas turlania
+    let ticks = 0;
+    const interval = setInterval(() => {
+      setRoll(Math.floor(Math.random() * 6) + 1);
+      ticks++;
 
-      // Logowanie rzutu dla wszystkich w pokoju multiplayer
-      const logMsg = lang === 'pl' 
-        ? `Kostka d6: wyrzucono ${result}` 
-        : `Dice d6: rolled ${result}`;
-      pushLogToCloud(logMsg, 'info');
-    }, 400);
+      if (ticks >= 8) { // 8 szybkich zmian co 50ms (łącznie 400ms)
+        clearInterval(interval);
+        const finalResult = Math.floor(Math.random() * 6) + 1;
+        setRoll(finalResult);
+        setIsRolling(false);
+
+        // Logowanie rzutu dla wszystkich w pokoju multiplayer
+        const logMsg = lang === 'pl' 
+          ? `Kostka d6: wyrzucono ${finalResult}` 
+          : `Dice d6: rolled ${finalResult}`;
+        pushLogToCloud(logMsg, 'info');
+
+        // NAGRODA: Rozbłysk konfetti w kolorach gry przy wyrzuceniu 6!
+        if (finalResult === 6) {
+          confetti({
+            particleCount: 35,
+            spread: 45,
+            colors: ['#c084fc', '#f472b6', '#6366f1'] // fioletowy, różowy i indygo
+          });
+        }
+      }
+    }, 50);
   };
 
   // --- GM & OWNERSHIP SYSTEM ---
@@ -348,6 +364,22 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-6 font-sans selection:bg-purple-500/30">
+      {/* Dynamiczne wstrzyknięcie animacji trzęsienia kostką */}
+      <style>{`
+        @keyframes dice-shake {
+          0% { transform: rotate(0deg) scale(0.9); }
+          15% { transform: rotate(-18deg) scale(1.1); }
+          30% { transform: rotate(18deg) scale(0.95); }
+          45% { transform: rotate(-12deg) scale(1.05); }
+          60% { transform: rotate(12deg) scale(0.98); }
+          75% { transform: rotate(-6deg) scale(1.02); }
+          100% { transform: rotate(0deg) scale(1); }
+        }
+        .animate-dice {
+          animation: dice-shake 0.4s ease-in-out;
+        }
+      `}</style>
+
       <header className="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           {/* LOGO - TAP 5 TIMES TO UNLOCK GM */}
@@ -488,7 +520,7 @@ const App: React.FC = () => {
             <button
               onClick={handleRollDice}
               disabled={isRolling}
-              className={`w-12 h-12 bg-slate-900 border-2 border-purple-500/30 rounded-xl flex items-center justify-center text-xl font-black text-purple-400 shadow-md hover:border-purple-400 hover:text-purple-300 transition-all cursor-pointer outline-none focus:ring-1 focus:ring-purple-400/50 ${isRolling ? 'rotate-[360deg] scale-90' : 'active:scale-95'}`}
+              className={`w-12 h-12 bg-slate-900 border-2 border-purple-500/30 rounded-xl flex items-center justify-center text-xl font-black text-purple-400 shadow-md hover:border-purple-400 hover:text-purple-300 transition-all cursor-pointer outline-none focus:ring-1 focus:ring-purple-400/50 ${isRolling ? 'animate-dice' : 'active:scale-95'}`}
             >
               {roll}
             </button>
