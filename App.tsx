@@ -467,31 +467,31 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                <div className={`p-3 rounded-lg font-bold text-center text-lg animate-pulse mb-4 ${playersWinning ? 'bg-green-600 text-white shadow-lg shadow-green-900/50' : 'bg-red-600 text-white shadow-lg shadow-red-900/50'}`}>
+                <div className={`p-3 rounded-lg font-bold text-center text-lg animate-pulse ${playersWinning ? 'bg-green-600 text-white shadow-lg shadow-green-900/50' : 'bg-red-600 text-white shadow-lg shadow-red-900/50'}`}>
                   {playersWinning ? t.playersWinning : t.monsterWinning}
-                </div>
-
-                {/* KOSTKA D6 WEWNĄTRZ ARENY WALKI */}
-                <div className="pt-4 border-t border-slate-700/50 flex items-center justify-between gap-4 animate-in fade-in duration-300">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase text-red-400">
-                      {lang === 'pl' ? 'Kostka d6 (Ucieczka)' : 'd6 Dice (Escape)'}
-                    </span>
-                    <span className="text-[11px] text-slate-400">
-                      {lang === 'pl' ? 'Rzuć, aby uciec przed potworem!' : 'Roll to run away!'}
-                    </span>
-                  </div>
-                  
-                  <button
-                    onClick={handleRollDice}
-                    disabled={isRolling}
-                    className={`w-12 h-12 bg-slate-900 border-2 border-red-500/30 rounded-xl flex items-center justify-center text-xl font-black text-red-400 shadow-md hover:border-red-500 hover:text-red-300 transition-all cursor-pointer outline-none focus:ring-1 focus:ring-red-400/50 ${isRolling ? 'rotate-[360deg] scale-90' : 'active:scale-95'}`}
-                  >
-                    {roll}
-                  </button>
                 </div>
               </div>
             )}
+          </div>
+
+          {/* KOSTKA D6 - ZAWSZE WIDOCZNA BEZPOŚREDNIO POD ARENĄ WALKI */}
+          <div className="bg-slate-800/50 rounded-2xl border border-slate-700/50 p-4 backdrop-blur-sm flex items-center justify-between gap-4">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase text-purple-400">
+                {lang === 'pl' ? 'Kostka d6' : 'd6 Dice'}
+              </span>
+              <span className="text-[11px] text-slate-400">
+                {lang === 'pl' ? 'Kliknij, aby rzucić' : 'Click to roll'}
+              </span>
+            </div>
+            
+            <button
+              onClick={handleRollDice}
+              disabled={isRolling}
+              className={`w-12 h-12 bg-slate-900 border-2 border-purple-500/30 rounded-xl flex items-center justify-center text-xl font-black text-purple-400 shadow-md hover:border-purple-400 hover:text-purple-300 transition-all cursor-pointer outline-none focus:ring-1 focus:ring-purple-400/50 ${isRolling ? 'rotate-[360deg] scale-90' : 'active:scale-95'}`}
+            >
+              {roll}
+            </button>
           </div>
 
           {/* DUNGEON LOG */}
